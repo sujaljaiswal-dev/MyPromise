@@ -8,6 +8,45 @@ class MyPromise {
   get Rejected() {
     return "Rejected";
   }
+  static Myall(arr) {
+    const Carr = [...arr];
+    const result = [];
+    let count = 0;
+    return new MyPromise((res, rej) => {
+      if (Carr.length === 0) {
+        res(result);
+      }
+      Carr.forEach((p, i) => {
+        p.Mythen(
+          (val) => {
+            result[i] = val;
+            count++;
+            if (Carr.length === count) {
+              res(result);
+            }
+          },
+          (val) => {
+            rej(val);
+          },
+        );
+      });
+    });
+  }
+  static Myrace(arr) {
+    const Carr = [...arr];
+    return new MyPromise((res, rej) => {
+      Carr.forEach((p, i) => {
+        p.Mythen(
+          (val) => {
+            res(val);
+          },
+          (val) => {
+            rej(val);
+          },
+        );
+      });
+    });
+  }
   constructor(fn = () => {}) {
     this.state = {
       status: this.pending,
@@ -43,7 +82,10 @@ class MyPromise {
       }
       const result = fn(this.state.data);
       if (result instanceof MyPromise) {
-        result.Mythen((val) => newPromise.resolve(val));
+        result.Mythen(
+          (val) => newPromise.resolve(val),
+          (val) => newPromise.reject(val),
+        );
       } else {
         newPromise.resolve(result);
       }

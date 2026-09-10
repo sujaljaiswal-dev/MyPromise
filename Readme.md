@@ -32,6 +32,14 @@ Basically just `.Mythen(undefined, onRejected)` with a nicer name. Nothing fancy
 
 Runs your cleanup function no matter what happened — success or failure — and doesn't touch the actual value or error passing through it. Works stuck in the middle of a chain or at the very end, sync or async.
 
+### `MyPromise.Myall(promises)`
+
+Takes an array of promises, resolves once every single one has resolved, with the results in the same order as the input array — not the order they actually finished in. Rejects immediately the moment any one of them fails, without waiting around for the rest.
+
+### `MyPromise.Myrace(promises)`
+
+Settles with whichever promise finishes first, success or failure, and just ignores the rest after that. Didn't need a results array or a counter for this one — the "only settle once" guard I built on day one handles ignoring the losers automatically, for free.
+
 ### Two bugs I only found after digging deeper
 
 Once the "happy path" worked, I compared it against how real Promises behave and found two real gaps:
@@ -50,12 +58,14 @@ I went through this roughly in order, testing each part before moving to the nex
 5. Actual chaining — returning a new promise, and unwrapping nested promises
 6. `.MyCatch()` and `.Myfinally()`
 7. Going back and fixing the two correctness issues above
+8. MyPromise.Myall() and MyPromise.Myrace()
 
 Almost every stage had a real bug I had to find myself — indexing into an array wrong, a constructor that crashed because I forgot a default parameter, mixing up `result` and `err` inside a catch block, forgetting to actually run the cleanup function in one branch of `.Myfinally()`. None of it was handed to me pre-solved, which honestly made it stick way better than just reading how Promises work.
 
 ## What's still missing compared to the real thing
 
-- No `Promise.all`, `Promise.race`, `Promise.allSettled`, `Promise.any`, or `Promise.resolve`/`Promise.reject` yet — these are next
+- No `Promise.resolve`/`Promise.reject`, `Promise.allSettled`, or `Promise.any` — decided to skip these on purpose, they'd just repeat the same pattern as `My.all()`/`.Myrace()`
+- `Async/await` support (via a generator-based implementation) is next, still in progress
 - Only recognizes promises made from my own class — a real Promise or some other library's promise wouldn't get unwrapped correctly
 - The queue-draining function uses recursion, so a truly massive number of chained callbacks could theoretically blow the stack (not something that'll happen in normal use)
 - No warning system for rejections nobody ever handles — native JS actually complains about that, mine just stays silent
